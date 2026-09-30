@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TikTik</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #000;
+    color: white;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.logo {
+    font-size: 27px;
+    font-weight: bold;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-button {
+    border: none;
+    background: white;
+    color: black;
+    padding: 9px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.search {
+    position: fixed;
+    top: 72px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 900;
+    display: flex;
+    gap: 5px;
+}
+
+.search input {
+    width: 230px;
+    padding: 10px;
+    border-radius: 20px;
+    border: none;
+    outline: none;
+}
+
+.search button {
+    border: none;
+    border-radius: 20px;
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+.upload-panel {
+    position: fixed;
+    top: 115px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 330px;
+    max-width: 90%;
+    max-height: 75vh;
+    overflow-y: auto;
+    background: rgba(20,20,20,0.96);
+    padding: 18px;
+    border-radius: 18px;
+    z-index: 950;
+    display: none;
+}
+
+.upload-panel.show {
+    display: block;
+}
+
+.upload-panel input,
+.upload-panel textarea {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    outline: none;
+}
+
+.upload-panel textarea {
+    resize: none;
+    height: 70px;
+}
+
+.upload-panel button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 11px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#videoFilter {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+}
+
+#filterPreview {
+    display: none;
+    width: 100%;
+    max-height: 300px;
+    margin-top: 15px;
+    border-radius: 12px;
+    background: #000;
+    object-fit: contain;
+}
+
+/* VIDEO FILTERS */
+
+.filter-vintage {
+    filter: sepia(0.6) contrast(1.1) saturate(0.8);
+}
+
+.filter-bw {
+    filter: grayscale(1);
+}
+
+.filter-warm {
+    filter: sepia(0.25) saturate(1.4);
+}
+
+.filter-cool {
+    filter: hue-rotate(15deg) saturate(1.2);
+}
+
+.filter-cinematic {
+    filter: contrast(1.3) saturate(0.8) brightness(0.85);
+}
+
+.filter-vivid {
+    filter: saturate(1.8) contrast(1.15);
+}
+
+.filter-bright {
+    filter: brightness(1.3) contrast(1.05);
+}
+
+.feed {
+    width: 100vw;
+    height: 100vh;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+}
+
+.feed::-webkit-scrollbar {
+    display: none;
+}
+
+.video-card {
+    width: 100vw;
+    height: 100vh;
+    min-height: 100vh;
+    position: relative;
+    scroll-snap-align: start;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+}
+
+.tiktok-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.info {
+    position: absolute;
+    left: 20px;
+    bottom: 35px;
+    max-width: 55%;
+    z-index: 20;
+    text-shadow: 0 2px 8px #000;
+}
+
+.info h3 {
+    margin-bottom: 8px;
+}
+
+.caption {
+    margin-bottom: 8px;
+}
+
+.hashtags {
+    color: #aaa;
+}
+
+.stats {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #ddd;
+}
+
+.right-buttons {
+    position: absolute;
+    right: 18px;
+    bottom: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 50;
+}
+
+.right-buttons button {
+    min-width: 70px;
+    min-height: 55px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 15px;
+    background: rgba(0,0,0,0.65);
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.right-buttons button:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.liked {
+    background: rgba(255,50,80,0.8) !important;
+}
+
+.saved {
+    background: rgba(50,150,255,0.8) !important;
+}
+
+.heart {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%) scale(0);
+    font-size: 100px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.heart.active {
+    animation: heartAnimation 0.8s ease;
+}
+
+@keyframes heartAnimation {
+    0% {
+        transform: translate(-50%,-50%) scale(0);
+        opacity: 0;
+    }
+
+    30% {
+        transform: translate(-50%,-50%) scale(1.3);
+        opacity: 1;
+    }
+
+    70% {
+        transform: translate(-50%,-50%) scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(-50%,-50%) scale(1.5);
+        opacity: 0;
+    }
+}
+
+.comment-box {
+    position: absolute;
+    right: 100px;
+    bottom: 80px;
+    width: 320px;
+    max-width: 45%;
+    background: rgba(15,15,15,0.97);
+    border-radius: 15px;
+    padding: 15px;
+    z-index: 80;
+    display: none;
+}
+
+.comment-box.show {
+    display: block;
+}
+
+.comments-list {
+    max-height: 150px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+}
+
+.single-comment {
+    background: #292929;
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.comment-input {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    outline: none;
+}
+
+.comment-submit {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.navigation {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 200;
+}
+
+.navigation button {
+    border: none;
+    padding: 10px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.profile-panel {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+}
+
+.profile-panel.show {
+    display: flex;
+}
+
+.profile-card {
+    width: 340px;
+    max-width: 90%;
+    background: #151515;
+    padding: 25px;
+    border-radius: 20px;
+    text-align: center;
+}
+
+.avatar {
+    width: 90px;
+    height: 90px;
+    margin: auto;
+    border-radius: 50%;
+    background: #292929;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 45px;
+}
+
+.profile-card h2 {
+    margin-top: 12px;
+}
+
+.profile-card p {
+    color: #aaa;
+    margin-top: 8px;
+}
+
+.profile-card button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.login-panel {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 4000;
+}
+
+.login-panel.show {
+    display: flex;
+}
+
+.login-card {
+    width: 330px;
+    max-width: 90%;
+    background: #151515;
+    padding: 25px;
+    border-radius: 20px;
+}
+
+.login-card input {
+    width: 100%;
+    margin-top: 10px;
+    padding: 11px;
+    border: none;
+    border-radius: 10px;
+    outline: none;
+}
+
+.login-card button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 11px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.close-button {
+    background: #444 !important;
+    color: white;
+}
+
+.empty {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+@media (max-width:600px) {
+
+    header {
+        height: 52px;
+        padding: 0 10px;
+    }
+
+    .logo {
+        font-size: 21px;
+    }
+
+    .header-button {
+        padding: 7px 10px;
+        font-size: 11px;
+    }
+
+    .search {
+        top: 60px;
+    }
+
+    .search input {
+        width: 170px;
+    }
+
+    .right-buttons {
+        right: 8px;
+        bottom: 85px;
+        gap: 7px;
+    }
+
+    .right-buttons button {
+        min-width: 58px;
+        min-height: 48px;
+        font-size: 10px;
+    }
+
+    .info {
+        left: 12px;
+        bottom: 25px;
+        max-width: 65%;
+    }
+
+    .info h3 {
+        font-size: 15px;
+    }
+
+    .caption {
+        font-size: 12px;
+    }
+
+    .stats {
+        font-size: 11px;
+    }
+
+    .comment-box {
+        right: 70px;
+        bottom: 75px;
+        max-width: calc(100% - 80px);
+    }
+
+    .heart {
+        font-size: 75px;
+    }
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">
+🎬 TikTik
+</div>
+
+<div class="header-right">
+
+<button
+class="header-button"
+onclick="toggleUpload()">
+
+* Upload
+
+  </button>
+
+{% if current_user %}
+
+<button
+class="header-button"
+onclick="openProfile()">
+👤 {{ current_user }} </button>
+
+{% else %}
+
+<button
+class="header-button"
+onclick="openLogin()">
+Login </button>
+
+{% endif %}
+
+</div>
+</header>
+
+<form
+class="search"
+method="GET"
+action="/">
+
+<input
+type="text"
+name="search"
+value="{{ search }}"
+placeholder="Search videos, users, hashtags">
+
+<button>
+🔍
+</button>
+
+</form>
+
+{% if current_user %}
+
+<div
+class="upload-panel"
+id="uploadPanel">
+
+<h3>Upload TikTik Video 🎬</h3>
+
+<form
+action="/upload"
+method="POST"
+enctype="multipart/form-data">
+
+<input
+type="file"
+id="videoFile"
+name="video"
+accept="video/*"
+onchange="previewVideo(this)"
+required>
+
+<h4 style="margin-top:15px;">
+🎨 Video Filters
+</h4>
+
+<select
+id="videoFilter"
+onchange="applyVideoFilter()">
+
+<option value="none">
+Original
+</option>
+
+<option value="vintage">
+Vintage
+</option>
+
+<option value="bw">
+Black & White
+</option>
+
+<option value="warm">
+Warm
+</option>
+
+<option value="cool">
+Cool
+</option>
+
+<option value="cinematic">
+Cinematic
+</option>
+
+<option value="vivid">
+Vivid
+</option>
+
+<option value="bright">
+Bright
+</option>
+
+</select>
+
+<video
+id="filterPreview"
+controls
+playsinline> </video>
+
+<input
+type="text"
+name="caption"
+placeholder="Write a caption...">
+
+<input
+type="text"
+name="hashtags"
+placeholder="#fun #video #tiktik">
+
+<button type="submit">
+Upload Video
+</button>
+
+</form>
+
+</div>
+
+{% endif %}
+
+<div
+class="feed"
+id="feed">
+
+{% if videos %}
+
+{% for video in videos %}
+
+<div
+class="video-card"
+data-video-id="{{ video.id }}">
+
+<video
+class="tiktok-video"
+controls
+loop
+playsinline
+preload="metadata">
+
+<source
+src="{{ url_for('uploaded_file', filename=video.filename) }}">
+
+</video>
+
+<div class="heart">
+❤️
+</div>
+
+<div class="info">
+
+<h3>
+@{{ video.username }}
+</h3>
+
+<div class="caption">
+{{ video.caption }}
+</div>
+
+<div class="hashtags">
+{{ video.hashtags }}
+</div>
+
+<div class="stats">
+👁 {{ video.views }}
+&nbsp;&nbsp;
+❤️ <span class="like-count">
+{{ video.like_count }}
+</span>
+&nbsp;&nbsp;
+💬 {{ video.comment_count }}
+</div>
+
+</div>
+
+<div class="right-buttons">
+
+<button
+class="like-button"
+onclick="likeVideo(this)">
+❤️ Like <br> <span>
+{{ video.like_count }} </span> </button>
+
+<button
+onclick="commentVideo(this)">
+💬 Comment </button>
+
+<button
+class="save-button"
+onclick="saveVideo(this)">
+🔖 Save </button>
+
+<button
+onclick="shareVideo(this)">
+↗ Share </button>
+
+{% if current_user and current_user == video.username %}
+
+<button
+onclick="deleteVideo({{ video.id }})">
+🗑 Delete </button>
+
+{% endif %}
+
+</div>
+
+<div class="comment-box">
+
+<div class="comments-list">
+
+{% for comment in comments[video.id] %}
+
+<div class="single-comment">
+<b>@{{ comment.username }}</b>:
+{{ comment.comment }}
+</div>
+
+{% endfor %}
+
+</div>
+
+{% if current_user %}
+
+<input
+class="comment-input"
+type="text"
+placeholder="Write a comment...">
+
+<button
+class="comment-submit"
+onclick="addComment(this)">
+Send </button>
+
+{% else %}
+
+<p>
+Login to comment.
+</p>
+
+{% endif %}
+
+</div>
+
+</div>
+
+{% endfor %}
+
+{% else %}
+
+<div class="empty">
+
+<div>
+
+<h2>
+No videos yet 🎬
+</h2>
+
+<p>
+Login and upload your first TikTik video.
+</p>
+
+</div>
+
+</div>
+
+{% endif %}
+
+</div>
+
+<div class="navigation">
+
+<button onclick="previousVideo()">
+⬆ Previous
+</button>
+
+<button onclick="nextVideo()">
+⬇ Next
+</button>
+
+</div>
+
+<div
+class="profile-panel"
+id="profilePanel"
+onclick="closeProfileOutside(event)">
+
+<div class="profile-card">
+
+<div class="avatar">
+👤
+</div>
+
+<h2>
+@{{ current_user }}
+</h2>
+
+<p>
+TikTik Creator 🎬
+</p>
+
+<button onclick="goToProfile()">
+View Profile
+</button>
+
+<br>
+
+<button onclick="logout()">
+Logout
+</button>
+
+<br>
+
+<button
+class="close-button"
+onclick="closeProfile()">
+Close </button>
+
+</div>
+
+</div>
+
+<div
+class="login-panel"
+id="loginPanel">
+
+<div class="login-card">
+
+<h2>
+Login
+</h2>
+
+<form
+action="/login"
+method="POST">
+
+<input
+type="text"
+name="username"
+placeholder="Username"
+required>
+
+<input
+type="password"
+name="password"
+placeholder="Password"
+required>
+
+<button>
+Login
+</button>
+
+</form>
+
+<form
+action="/register"
+method="POST">
+
+<input
+type="text"
+name="username"
+placeholder="New username"
+required>
+
+<input
+type="password"
+name="password"
+placeholder="New password"
+required>
+
+<button>
+Create Account
+</button>
+
+</form>
+
+<button
+class="close-button"
+onclick="closeLogin()">
+Close </button>
+
+</div>
+
+</div>
+
+<script>
+
+function toggleUpload() {
+    const panel = document.getElementById("uploadPanel");
+
+    if (panel) {
+        panel.classList.toggle("show");
+    }
+}
+
+function openLogin() {
+    document
+        .getElementById("loginPanel")
+        .classList.add("show");
+}
+
+function closeLogin() {
+    document
+        .getElementById("loginPanel")
+        .classList.remove("show");
+}
+
+function openProfile() {
+    document
+        .getElementById("profilePanel")
+        .classList.add("show");
+}
+
+function closeProfile() {
+    document
+        .getElementById("profilePanel")
+        .classList.remove("show");
+}
+
+function closeProfileOutside(event) {
+    if (event.target.id === "profilePanel") {
+        closeProfile();
+    }
+}
+
+function logout() {
+    window.location.href = "/logout";
+}
+
+function goToProfile() {
+    window.location.href =
+        "/profile/{{ current_user }}";
+}
+
+
+/* VIDEO FILTER PREVIEW */
+
+function previewVideo(input) {
+
+    const file = input.files[0];
+
+    const preview =
+        document.getElementById("filterPreview");
+
+    if (!file || !preview) {
+        return;
+    }
+
+    if (preview.dataset.objectUrl) {
+        URL.revokeObjectURL(
+            preview.dataset.objectUrl
+        );
+    }
+
+    const videoURL =
+        URL.createObjectURL(file);
+
+    preview.dataset.objectUrl =
+        videoURL;
+
+    preview.src =
+        videoURL;
+
+    preview.style.display =
+        "block";
+
+    applyVideoFilter();
+}
+
+
+function applyVideoFilter() {
+
+    const preview =
+        document.getElementById(
+            "filterPreview"
+        );
+
+    const filter =
+        document.getElementById(
+            "videoFilter"
+        );
+
+    if (!preview || !filter) {
+        return;
+    }
+
+    preview.className = "";
+
+    if (filter.value !== "none") {
+
+        preview.classList.add(
+            "filter-" + filter.value
+        );
+
+    }
+}
+
+
+/* LIKE */
+
+function likeVideo(button) {
+
+    const card =
+        button.closest(".video-card");
+
+    const videoId =
+        card.dataset.videoId;
+
+    fetch(
+        "/like/" + videoId,
+        {
+            method: "POST"
+        }
+    )
+    .then(response =>
+        response.json()
+    )
+    .then(data => {
+
+        if (!data.success) {
+            openLogin();
+            return;
+        }
+
+        const count =
+            button.querySelector("span");
+
+        count.innerText =
+            data.count;
+
+        if (data.liked) {
+
+            button.classList.add(
+                "liked"
+            );
+
+            const heart =
+                card.querySelector(
+                    ".heart"
+                );
+
+            heart.classList.remove(
+                "active"
+            );
+
+            void heart.offsetWidth;
+
+            heart.classList.add(
+                "active"
+            );
+
+        } else {
+
+            button.classList.remove(
+                "liked"
+            );
+
+        }
+
+    })
+    .catch(error => {
+        console.error(error);
+    });
+}
+
+
+/* SAVE */
+
+function saveVideo(button) {
+
+    const card =
+        button.closest(".video-card");
+
+    const videoId =
+        card.dataset.videoId;
+
+    fetch(
+        "/save/" + videoId,
+        {
+            method: "POST"
+        }
+    )
+    .then(response =>
+        response.json()
+    )
+    .then(data => {
+
+        if (!data.success) {
+            openLogin();
+            return;
+        }
+
+        if (data.saved) {
+
+            button.classList.add(
+                "saved"
+            );
+
+            button.innerText =
+                "✅ Saved";
+
+        } else {
+
+            button.classList.remove(
+                "saved"
+            );
+
+            button.innerText =
+                "🔖 Save";
+
+        }
+
+    })
+    .catch(error => {
+        console.error(error);
+    });
+}
+
+
+/* COMMENTS */
+
+function commentVideo(button) {
+
+    const card =
+        button.closest(".video-card");
+
+    const box =
+        card.querySelector(
+            ".comment-box"
+        );
+
+    box.classList.toggle(
+        "show"
+    );
+}
+
+
+function addComment(button) {
+
+    const box =
+        button.closest(
+            ".comment-box"
+        );
+
+    const card =
+        button.closest(
+            ".video-card"
+        );
+
+    const videoId =
+        card.dataset.videoId;
+
+    const input =
+        box.querySelector(
+            ".comment-input"
+        );
+
+    const text =
+        input.value.trim();
+
+    if (!text) {
+        return;
+    }
+
+    const form =
+        new FormData();
+
+    form.append(
+        "comment",
+        text
+    );
+
+    fetch(
+        "/comment/" + videoId,
+        {
+            method: "POST",
+            body: form
+        }
+    )
+    .then(() => {
+        location.reload();
+    });
+}
+
+
+/* SHARE */
+
+function shareVideo(button) {
+
+    const card =
+        button.closest(
+            ".video-card"
+        );
+
+    const video =
+        card.querySelector(
+            ".tiktok-video"
+        );
+
+    const url =
+        video.currentSrc ||
+        window.location.href;
+
+    if (navigator.share) {
+
+        navigator.share({
+            title: "TikTik",
+            text:
+                "Check out this TikTik video!",
+            url: url
+        }).catch(() => {});
+
+    } else {
+
+        navigator.clipboard
+            .writeText(url)
+            .then(() => {
+
+                alert(
+                    "Video link copied!"
+                );
+
+            });
+
+    }
+}
+
+
+/* DELETE */
+
+function deleteVideo(videoId) {
+
+    if (
+        !confirm(
+            "Delete this video?"
+        )
+    ) {
+        return;
+    }
+
+    fetch(
+        "/delete/" + videoId,
+        {
+            method: "POST"
+        }
+    )
+    .then(() => {
+        location.reload();
+    });
+}
+
+
+/* NEXT VIDEO */
+
+function nextVideo() {
+
+    const cards =
+        document.querySelectorAll(
+            ".video-card"
+        );
+
+    const current =
+        getCurrentVideoIndex();
+
+    if (
+        current >= 0 &&
+        current < cards.length - 1
+    ) {
+
+        cards[current + 1]
+            .scrollIntoView({
+                behavior: "smooth"
+            });
+    }
+}
+
+
+/* PREVIOUS VIDEO */
+
+function previousVideo() {
+
+    const cards =
+        document.querySelectorAll(
+            ".video-card"
+        );
+
+    const current =
+        getCurrentVideoIndex();
+
+    if (current > 0) {
+
+        cards[current - 1]
+            .scrollIntoView({
+                behavior: "smooth"
+            });
+    }
+}
+
+
+/* CURRENT VIDEO */
+
+function getCurrentVideoIndex() {
+
+    const cards =
+        document.querySelectorAll(
+            ".video-card"
+        );
+
+    let current = -1;
+
+    cards.forEach(
+        (card, index) => {
+
+            const rect =
+                card.getBoundingClientRect();
+
+            if (
+                rect.top >= -100 &&
+                rect.top <= 100
+            ) {
+
+                current = index;
+
+            }
+
+        }
+    );
+
+    return current;
+}
+
+
+/* AUTO PLAY */
+
+const videos =
+    document.querySelectorAll(
+        ".tiktok-video"
+    );
+
+const observer =
+    new IntersectionObserver(
+        entries => {
+
+            entries.forEach(
+                entry => {
+
+                    const video =
+                        entry.target;
+
+                    if (
+                        entry.isIntersecting &&
+                        entry.intersectionRatio >= 0.6
+                    ) {
+
+                        videos.forEach(
+                            other => {
+
+                                if (
+                                    other !== video
+                                ) {
+
+                                    other.pause();
+
+                                }
+
+                            }
+                        );
+
+                        video.play()
+                            .catch(
+                                () => {}
+                            );
+
+                        const card =
+                            video.closest(
+                                ".video-card"
+                            );
+
+                        if (
+                            card &&
+                            !card.dataset.viewed
+                        ) {
+
+                            card.dataset.viewed =
+                                "true";
+
+                            fetch(
+                                "/view/" +
+                                card.dataset.videoId,
+                                {
+                                    method:
+                                        "POST"
+                                }
+                            );
+
+                        }
+
+                    } else {
+
+                        video.pause();
+
+                    }
+
+                }
+            );
+
+        },
+        {
+            threshold: [0.6]
+        }
+    );
+
+videos.forEach(
+    video => {
+        observer.observe(video);
+    }
+);
+
+
+/* DOUBLE CLICK LIKE */
+
+videos.forEach(
+    video => {
+
+        video.addEventListener(
+            "dblclick",
+            function() {
+
+                const card =
+                    video.closest(
+                        ".video-card"
+                    );
+
+                const button =
+                    card.querySelector(
+                        ".like-button"
+                    );
+
+                if (
+                    !button.classList.contains(
+                        "liked"
+                    )
+                ) {
+
+                    likeVideo(button);
+
+                }
+
+            }
+        );
+
+    }
+);
+
+
+/* ENTER COMMENT */
+
+document
+    .querySelectorAll(
+        ".comment-input"
+    )
+    .forEach(
+        input => {
+
+            input.addEventListener(
+                "keydown",
+                function(event) {
+
+                    if (
+                        event.key === "Enter"
+                    ) {
+
+                        event.preventDefault();
+
+                        const button =
+                            input
+                                .closest(
+                                    ".comment-box"
+                                )
+                                .querySelector(
+                                    ".comment-submit"
+                                );
+
+                        addComment(button);
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+</script>
+
+</body>
+</html>
